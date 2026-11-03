@@ -192,6 +192,18 @@ Namespace Controls
             End Get
         End Property
 
+        Public Shared ReadOnly Property GridHeaderBg As Color
+            Get
+                Return Color.FromArgb(247, 249, 248)          ' #F7F9F8
+            End Get
+        End Property
+
+        Public Shared ReadOnly Property GridRowAlt As Color
+            Get
+                Return Color.FromArgb(245, 248, 246)          ' #F5F8F6
+            End Get
+        End Property
+
 #End Region
 
 #Region "Font tokens (Inter-style family with Segoe UI fallback)"

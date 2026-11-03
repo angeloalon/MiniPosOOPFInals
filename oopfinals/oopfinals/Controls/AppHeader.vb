@@ -45,7 +45,7 @@ Namespace Controls
 
             Using titleFont As Font = Theme.FontFor(ThemeWeight.Bold, 12.5F)
                 TextRenderer.DrawText(g, "MINI-GROCERY STORE POS", titleFont,
-                                      New Rectangle(16, 10, Me.ClientSize.Width - 200, 26), Color.White,
+                                      New Rectangle(16, 10, Math.Max(0, Me.ClientSize.Width - 200), 26), Color.White,
                                       TextFormatFlags.Left Or TextFormatFlags.VerticalCenter Or TextFormatFlags.EndEllipsis)
             End Using
 

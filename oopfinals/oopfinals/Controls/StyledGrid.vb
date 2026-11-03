@@ -35,9 +35,9 @@ Namespace Controls
             grid.EnableHeadersVisualStyles = False
 
             ' Column headers
-            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(247, 249, 248)
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Theme.GridHeaderBg
             grid.ColumnHeadersDefaultCellStyle.ForeColor = Theme.Ink
-            grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(247, 249, 248)
+            grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = Theme.GridHeaderBg
             grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = Theme.Ink
             grid.ColumnHeadersDefaultCellStyle.Font = Theme.FontFor(ThemeWeight.Semibold, 9.0F)
             grid.ColumnHeadersDefaultCellStyle.Padding = New Padding(6, 6, 6, 6)
@@ -47,12 +47,12 @@ Namespace Controls
 
             ' Row template
             grid.RowTemplate.Height = 32
-            grid.DefaultCellStyle.BackColor = Color.White
+            grid.DefaultCellStyle.BackColor = Theme.CardBg
             grid.DefaultCellStyle.ForeColor = Theme.Ink
             grid.DefaultCellStyle.SelectionBackColor = Theme.GreenTint
             grid.DefaultCellStyle.SelectionForeColor = Theme.Ink
             grid.DefaultCellStyle.Font = Theme.BodyFont()
-            grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(245, 248, 246)
+            grid.AlternatingRowsDefaultCellStyle.BackColor = Theme.GridRowAlt
             grid.AlternatingRowsDefaultCellStyle.SelectionBackColor = Theme.GreenTint
             grid.AlternatingRowsDefaultCellStyle.SelectionForeColor = Theme.Ink
 

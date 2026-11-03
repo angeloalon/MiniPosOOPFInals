@@ -93,6 +93,21 @@
     <Compile Include="Models\Sale.vb" />
     <Compile Include="Models\Discount.vb" />
     <Compile Include="Models\IReportable.vb" />
+    <Compile Include="Controls\Theme.vb" />
+    <Compile Include="Controls\IconArt.vb" />
+    <Compile Include="Controls\StyledControls.vb">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\StyledGrid.vb" />
+    <Compile Include="Controls\PageHeading.vb">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\AppHeader.vb">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\IconTabBar.vb">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>

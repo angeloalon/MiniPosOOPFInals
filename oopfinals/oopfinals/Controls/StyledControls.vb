@@ -38,6 +38,8 @@ Namespace Controls
             Me.Font = Theme.FontFor(ThemeWeight.Semibold, 9.5F)
             Me.Height = 36
             Me.UseVisualStyleBackColor = False
+            Me.DoubleBuffered = True
+            Me.ApplyChrome()
         End Sub
 
         Public Property Kind As ThemeButtonKind
@@ -45,14 +47,45 @@ Namespace Controls
                 Return _kind
             End Get
             Set(value As ThemeButtonKind)
+                If _kind = value Then
+                    Return
+                End If
                 _kind = value
+                ApplyChrome()
                 Invalidate()
             End Set
         End Property
 
+        ' Resolves BackColor/ForeColor once per state change instead of
+        ' inside OnPaint — the paint loop only reads, never mutates, its
+        ' own properties. Disabled buttons no longer look clickable.
+        Private Sub ApplyChrome()
+            Dim bg As Color
+            Dim fore As Color
+            If Not Me.Enabled Then
+                bg = Theme.SecondaryHover
+                fore = Theme.Muted
+            ElseIf _pressed Then
+                Theme.GetButtonColors(_kind, False, bg, fore)
+                If _kind = ThemeButtonKind.Primary Then
+                    bg = Theme.GreenPress
+                ElseIf _kind = ThemeButtonKind.Secondary Then
+                    bg = Theme.SecondaryHover
+                    fore = Theme.Ink
+                End If
+            ElseIf _hover Then
+                Theme.GetButtonColors(_kind, False, bg, fore)
+            Else
+                Theme.GetButtonColors(_kind, True, bg, fore)
+            End If
+            Me.BackColor = bg
+            Me.ForeColor = fore
+        End Sub
+
         Protected Overrides Sub OnMouseEnter(e As EventArgs)
             MyBase.OnMouseEnter(e)
             _hover = True
+            ApplyChrome()
             Invalidate()
         End Sub
 
@@ -60,51 +93,40 @@ Namespace Controls
             MyBase.OnMouseLeave(e)
             _hover = False
             _pressed = False
+            ApplyChrome()
             Invalidate()
         End Sub
 
         Protected Overrides Sub OnMouseDown(e As MouseEventArgs)
             MyBase.OnMouseDown(e)
             _pressed = True
+            ApplyChrome()
             Invalidate()
         End Sub
 
         Protected Overrides Sub OnMouseUp(e As MouseEventArgs)
             MyBase.OnMouseUp(e)
             _pressed = False
+            ApplyChrome()
             Invalidate()
         End Sub
 
+        Protected Overrides Sub OnEnabledChanged(e As EventArgs)
+            MyBase.OnEnabledChanged(e)
+            _hover = False
+            _pressed = False
+            ApplyChrome()
+            Invalidate()
+        End Sub
+
+        ' Chrome (background/border/text colors) is resolved by ApplyChrome;
+        ' painting just renders the current state.
         Protected Overrides Sub OnPaint(pe As PaintEventArgs)
             Dim g As Graphics = pe.Graphics
             g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
 
-            Dim bg As Color
-            Dim fore As Color
-            If _pressed Then
-                Theme.GetButtonColors(_kind, False, bg, fore)
-            ElseIf _hover Then
-                Theme.GetButtonColors(_kind, False, bg, fore)
-                If _kind = ThemeButtonKind.Secondary OrElse _kind = ThemeButtonKind.Ghost Then
-                    ' Ghost hover is a tint; normal/secondary hover is the gray wash.
-                End If
-            Else
-                Theme.GetButtonColors(_kind, True, bg, fore)
-            End If
-
-            If _pressed AndAlso (_kind = ThemeButtonKind.Primary OrElse _kind = ThemeButtonKind.Secondary) Then
-                bg = If(_kind = ThemeButtonKind.Primary, Theme.GreenPress, Theme.SecondaryHover)
-                fore = If(_kind = ThemeButtonKind.Primary, Color.White, Theme.Ink)
-            End If
-
             Dim rect As New Rectangle(0, 0, Me.Width - 1, Me.Height - 1)
-            If _kind = ThemeButtonKind.Ghost AndAlso Not _hover Then
-                Me.BackColor = Color.Transparent
-            Else
-                Me.BackColor = bg
-            End If
-
-            Using b As New SolidBrush(bg)
+            Using b As New SolidBrush(Me.BackColor)
                 Theme.FillRounded(g, b, rect, 9)
             End Using
 
@@ -123,7 +145,21 @@ Namespace Controls
             TextRenderer.DrawText(g, Me.Text, Me.Font,
                                   If(Me.Image IsNot Nothing, New Rectangle(30, 0, Me.Width - 32, Me.Height),
                                                         New Rectangle(0, 0, Me.Width, Me.Height)),
-                                  fore, TextFormatFlags.HorizontalCenter Or TextFormatFlags.VerticalCenter Or TextFormatFlags.EndEllipsis)
+                                  Me.ForeColor, TextFormatFlags.HorizontalCenter Or TextFormatFlags.VerticalCenter Or TextFormatFlags.EndEllipsis)
+
+            ' Keyboard-focus cue: dashed inset ring, drawn last so it sits on top.
+            If Me.Focused AndAlso Me.ShowFocusCues Then
+                Dim ring As New Rectangle(2, 2, Me.Width - 5, Me.Height - 5)
+                If ring.Width > 0 AndAlso ring.Height > 0 Then
+                    Dim ringColor As Color = If(Me.Enabled AndAlso
+                                                (_kind = ThemeButtonKind.Primary OrElse _kind = ThemeButtonKind.Destructive OrElse _kind = ThemeButtonKind.Danger),
+                                                Color.White, Theme.Ink)
+                    Using p As New Pen(ringColor)
+                        p.DashStyle = Drawing2D.DashStyle.Dash
+                        Theme.DrawRounded(g, p, ring, 9)
+                    End Using
+                End If
+            End If
         End Sub
 
     End Class
@@ -198,9 +234,9 @@ Namespace Controls
             Dim back As Color
             Theme.GetToneColors(_tone, fore, back)
 
-            Dim rect As New Rectangle(0, 0, Me.Width, Me.Height - 1)
+            Dim rect As New Rectangle(0, 0, Me.Width, Me.Height)
             Using b As New SolidBrush(back)
-                Theme.FillRounded(g, b, rect, (Me.Height) \ 2)
+                Theme.FillRounded(g, b, rect, Me.Height \ 2)
             End Using
 
             TextRenderer.DrawText(g, Me.Text, Me.Font, rect, fore,
@@ -210,21 +246,61 @@ Namespace Controls
     End Class
 
     ' Shared input/combobox skinning for any stock control on a dashboard.
+    ' The focus ring is part of the M3 deliverable: a styled input tints
+    ' its background while it holds keyboard focus and restores the card
+    ' color on leave. A Tag marker guards against double-wiring when a
+    ' form styles the same input twice.
     Public NotInheritable Class StyledInputs
 
         Private Sub New()
         End Sub
 
         Public Shared Sub StyleTextBox(box As TextBox)
+            If box Is Nothing Then
+                Throw New ArgumentNullException("box", "StyleTextBox requires a text box.")
+            End If
             box.BorderStyle = BorderStyle.FixedSingle
             box.Font = Theme.BodyFont()
+            box.BackColor = Theme.CardBg
+            AttachFocusRing(box)
         End Sub
 
         Public Shared Sub StyleComboBox(combo As ComboBox)
+            If combo Is Nothing Then
+                Throw New ArgumentNullException("combo", "StyleComboBox requires a combo box.")
+            End If
             combo.DropDownStyle = ComboBoxStyle.DropDownList
             combo.FlatStyle = FlatStyle.Flat
             combo.Font = Theme.BodyFont()
+            combo.BackColor = Theme.CardBg
+            AttachFocusRing(combo)
         End Sub
+
+        Private Shared Sub AttachFocusRing(input As Control)
+            If TypeOf input.Tag Is FocusRingMarker Then
+                Return
+            End If
+            input.Tag = New FocusRingMarker()
+            AddHandler input.GotFocus, AddressOf OnFocusGained
+            AddHandler input.LostFocus, AddressOf OnFocusLost
+        End Sub
+
+        Private Shared Sub OnFocusGained(sender As Object, e As EventArgs)
+            Dim input As Control = TryCast(sender, Control)
+            If input IsNot Nothing Then
+                input.BackColor = Theme.InfoTint
+            End If
+        End Sub
+
+        Private Shared Sub OnFocusLost(sender As Object, e As EventArgs)
+            Dim input As Control = TryCast(sender, Control)
+            If input IsNot Nothing Then
+                input.BackColor = Theme.CardBg
+            End If
+        End Sub
+
+        Private Class FocusRingMarker
+        End Class
 
     End Class
 

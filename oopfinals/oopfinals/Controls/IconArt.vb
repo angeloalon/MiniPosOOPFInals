@@ -9,8 +9,10 @@ Option Strict On
 ' set with zero icon-font dependencies; unknown keys degrade gracefully
 ' to a letter badge so no screen ever ships a broken image.
 '
-' OOP concept: ENCAPSULATION — private glyph painters, one public cache
-' entry point (NotInheritable + Private Sub New, Shared only).
+' OOP concept: ENCAPSULATION — private glyph painters, one public entry
+' point (NotInheritable + Private Sub New, Shared only). GetIcon returns
+' a NEW bitmap each call — callers own it, should cache it, and must
+' dispose it; never call GetIcon from inside a paint handler.
 ' =====================================================================
 
 Imports System.Drawing
@@ -23,12 +25,19 @@ Namespace Controls
         Private Sub New()
         End Sub
 
+        ' White-glyph convenience overload (most screens draw icons over
+        ' HeaderGreen surfaces).
         Public Shared Function GetIcon(keyName As String, Optional size As Integer = 24) As Bitmap
+            Return GetIcon(keyName, size, Color.White)
+        End Function
+
+        ' Fully parameterized overload — e.g. ink glyphs for icons sitting
+        ' on light pill highlights inside the tab bar.
+        Public Shared Function GetIcon(keyName As String, size As Integer, foreColor As Color) As Bitmap
             Dim bmp As New Bitmap(size, size)
             Using g As Graphics = Graphics.FromImage(bmp)
                 g.SmoothingMode = SmoothingMode.AntiAlias
-                Dim fore As Color = Color.White
-                Using pen As New Pen(fore, Math.Max(1.6F, size / 16.0F))
+                Using pen As New Pen(foreColor, Math.Max(1.6F, size / 16.0F))
                     pen.StartCap = LineCap.Round
                     pen.EndCap = LineCap.Round
                     PaintGlyph(g, pen, If(keyName, String.Empty).Trim().ToLowerInvariant(), size)
@@ -165,8 +174,10 @@ Namespace Controls
                 Using sf As New StringFormat()
                     sf.Alignment = StringAlignment.Center
                     sf.LineAlignment = StringAlignment.Center
-                    g.DrawString(letter, fnt, New SolidBrush(pen.Color),
-                                 New RectangleF(m, m, w, w), sf)
+                    Using brush As New SolidBrush(pen.Color)
+                        g.DrawString(letter, fnt, brush,
+                                     New RectangleF(m, m, w, w), sf)
+                    End Using
                 End Using
             End Using
         End Sub
