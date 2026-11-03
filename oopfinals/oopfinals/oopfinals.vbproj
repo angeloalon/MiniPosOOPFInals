@@ -85,6 +85,14 @@
       <DependentUpon>Form1.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Models\Product.vb" />
+    <Compile Include="Models\Category.vb" />
+    <Compile Include="Models\Supplier.vb" />
+    <Compile Include="Models\StockMovement.vb" />
+    <Compile Include="Models\SaleItem.vb" />
+    <Compile Include="Models\Sale.vb" />
+    <Compile Include="Models\Discount.vb" />
+    <Compile Include="Models\IReportable.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>

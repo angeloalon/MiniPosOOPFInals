@@ -41,7 +41,9 @@ Mini-Grocery Store POS & Daily Inventory System — VB.NET Windows Forms, .NET F
 
 ## Git hygiene
 
-- There is no `.gitignore`; `.vs/`, `obj/`, and `packages/` are committed. Building dirties tracked `obj/` caches and creates untracked `bin/` output — after a build, `git restore` modified caches and `git clean -f oopfinals/oopfinals/bin oopfinals/oopfinals/obj` to leave the tree clean. Don't commit new build artifacts.
+- `.gitignore` excludes `.vs/`, `bin/`, `obj/`, and `*.user`. Never commit build output.
+- `oopfinals/packages/` stays committed so builds work without a NuGet restore.
+- Don't run `git clean` or `git restore` on the user's files. Ask first
 
 ## OpenCode config
 
