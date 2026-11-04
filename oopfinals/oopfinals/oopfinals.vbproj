@@ -137,9 +137,25 @@
     <Compile Include="Data\DatabaseHelper.vb" />
     <Compile Include="Data\ProductRepository.vb" />
     <Compile Include="Data\CategoryRepository.vb" />
+    <Compile Include="Data\SaleRepository.vb" />
     <Compile Include="Services\ValidationRules.vb" />
     <Compile Include="Services\AuthService.vb" />
     <Compile Include="Services\CartService.vb" />
+    <Compile Include="Services\ReceiptPrinter.vb" />
+    <Compile Include="Forms\ReceiptPreviewForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ReceiptPreviewForm.Designer.vb">
+      <DependentUpon>ReceiptPreviewForm.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PastReceiptForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\PastReceiptForm.Designer.vb">
+      <DependentUpon>PastReceiptForm.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Controls\Theme.vb" />
     <Compile Include="Controls\IconArt.vb" />
     <Compile Include="Controls\StyledControls.vb">

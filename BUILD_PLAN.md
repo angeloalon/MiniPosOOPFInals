@@ -213,7 +213,7 @@
 
 ---
 
-### [ ] M9 — Catalog repos + `CartService` + Cashier POS stage 1 *(Polymorphism #2 live)*
+### [x] M9 — Catalog repos + `CartService` + Cashier POS stage 1 *(Polymorphism #2 live)*
 
 **Goal:** the POS reads seeded data and the cart math runs; the sale itself is still pending.
 

@@ -5,25 +5,27 @@ Option Strict On
 ' oopfinals — Mini-Grocery Store POS & Daily Inventory System
 ' ITP 102 — Object-Oriented Programming · University of Caloocan City
 '
-' Forms/CashierDashboardForm.vb — Cashier dashboard: POS stage 1 (M9).
+' Forms/CashierDashboardForm.vb — Cashier dashboard: POS stage 1+2
+' (M9 catalog/cart/strategy work landed in M9; M10 completes the
+' money path: checkout, receipt trio and the Today tab).
 '
-' What runs TODAY (M9):
-'   • Products card — live search + category filter over the seeded
-'     catalog (ProductRepository.Search / GetAll); status text comes
-'     from the Product model's own helpers (GetStockStatus).
-'   • Cart card — add via double-click or the scan row; qty +/−,
-'     remove, clear. EVERY mutation goes through CartService; the
-'     form never touches the private line list (read-only exposure).
-'   • Payment rail — the discount combo stores Discount base-type
-'     references; picking one installs it into CartService's single
-'     strategy slot and the SAME GetDiscountAmount() call recomputes
-'     (POLYMORPHISM #2 — the Strategy swap is visible on the totals).
-'     The cash box computes change live; short cash surfaces the
-'     CartService message verbatim in the totals panel.
+' What runs TODAY (since M10):
+'   • Everything from M9 (Products card, Cart card, live strategy
+'     swap, live tender math) — see the M9 notes below.
+'   • CHECKOUT (the money path, spec §12.3): guards run BEFORE any
+'     SQL (empty cart, non-positive total, cash parse/limits), the
+'     cashier CONFIRMS, then SaleRepository.RecordSale writes sale +
+'     items + guarded stock decrements + audit movements in ONE
+'     transaction. ReceiptPreviewForm shows the receipt; when it
+'     closes the cart clears, the payment UI resets and POS stock +
+'     Today refresh. _isCheckingOut makes a double-click unable to
+'     fire two sales. F12 is the checkout shortcut (scan-row Enter
+'     adds items — the M9 Enter shortcut).
+'   • TODAY tab — the day's receipts (SaleRepository.GetSalesByDate)
+'     with View details opening PastReceiptForm (reprint included).
 '
-' What stays OFF (M9 contract): Checkout is rendered but disabled —
-' the atomic sale (SaleRepository transaction, receipt trio, Today
-' tab) lands with M10, which also owns the checkout enabling gate.
+' What stayed OFF in M9 — now enabled: btnCheckout wiring (this file
+' owns the Enabled gate flipped inside UpdateCheckoutTotals).
 '
 ' OOP concept: ENCAPSULATION — the form binds UI events to Services/
 ' Data only (spec §3); money math lives in CartService, SQL in the
@@ -53,9 +55,13 @@ Namespace Forms
 
         ' Re-entrancy guards: _isInitializing keeps combo autofills from
         ' firing handlers during construction; _isRefreshingCart keeps
-        ' SelectionChanged from chasing its own rebuild.
+        ' SelectionChanged from chasing its own rebuild; _isCheckingOut
+        ' (M10) makes a double-click on Checkout fire exactly ONE sale
+        ' even while the confirmation dialog / preview is still on
+        ' screen (spec §12.3 re-entry guard).
         Private _isInitializing As Boolean = True
         Private _isRefreshingCart As Boolean = False
+        Private _isCheckingOut As Boolean = False
         Private _selectedCartProductId As Integer = 0
 
         ' Optional constructor keeps the WinForms designer usable
@@ -67,6 +73,7 @@ Namespace Forms
             StyledGrid.Apply(Me.permissionsGrid)
             StyledGrid.Apply(Me.posGrid)
             StyledGrid.Apply(Me.cartGrid)
+            StyledGrid.Apply(Me.todayGrid)
             StyledInputs.StyleTextBox(Me.txtSearch)
             StyledInputs.StyleTextBox(Me.txtScan)
             StyledInputs.StyleTextBox(Me.txtCash)
@@ -81,6 +88,7 @@ Namespace Forms
             _isInitializing = False
 
             Me.tabRail.AddTab("pos", "POS", "pos")
+            Me.tabRail.AddTab("today", "Today", "today")
             Me.tabRail.AddTab("permissions", "Permissions", "permissions")
             Me.tabRail.SelectedKey = "pos"
 
@@ -111,10 +119,13 @@ Namespace Forms
                         " permission keys granted — " & _cashier.GetRoleName() &
                         " role (spec §6.2/§11)"
                 End If
+            ElseIf tabKey = "today" Then
+                Me.pageHeading.Text = "Today"
+                Me.pageHeading.Subtitle = "Today's completed transactions — double-click a row (or use View details) to reopen the receipt"
             Else
                 Me.pageHeading.Text = "POS"
                 If _cashier IsNot Nothing Then
-                    Me.pageHeading.Subtitle = "Search, scan and build the cart — discount strategies live (checkout lands in M10)"
+                    Me.pageHeading.Subtitle = "Search, scan and check out the cart — every sale writes one atomic receipt (F12 = checkout)"
                 End If
             End If
         End Sub
@@ -131,8 +142,14 @@ Namespace Forms
 
         Private Sub tabRail_SelectionChanged(key As String) Handles tabRail.SelectionChanged
             Dim onPermissions As Boolean = (key = "permissions")
-            Me.posContainer.Visible = Not onPermissions
+            Dim onToday As Boolean = (Not onPermissions) AndAlso (key = "today")
+            Me.posContainer.Visible = Not (onPermissions OrElse onToday)
+            Me.todayView.Visible = onToday
             Me.permissionsView.Visible = onPermissions
+
+            If onToday Then
+                LoadTodayTransactions()   ' fresh list on every visit
+            End If
             ApplyHeadingForTab(key)
         End Sub
 
@@ -445,10 +462,24 @@ Namespace Forms
                 End Try
             End If
 
-            ' M9 contract: the checkout button is PRESENT but DISABLED.
-            ' M10 wires the real gate (cart + cash + confirm dialog) and
-            ' owns flipping this Enabled flag.
-            Me.btnCheckout.Enabled = False
+            ' M10 gate — the checkout button enables ONLY when every
+            ' pre-SQL guard would pass: cart non-empty, positive total,
+            ' a live user, no checkout already in flight, and a parsed
+            ' cash value inside the §12.3 limits (0 ≤ cash ≤
+            ' ₱999,999.99, ≥ total due). Everything else stays grey.
+            Dim canCheckout As Boolean = False
+            If _cart.Items.Count > 0 AndAlso
+               _cart.GetNetTotal() > 0D AndAlso
+               _cashier IsNot Nothing AndAlso
+               Not _isCheckingOut Then
+
+                Dim cashValue As Decimal
+                If Decimal.TryParse(Me.txtCash.Text.Trim(), cashValue) Then
+                    canCheckout = (cashValue >= _cart.GetNetTotal()) AndAlso
+                                  (cashValue <= ValidationRules.MaxMoney)
+                End If
+            End If
+            Me.btnCheckout.Enabled = canCheckout
         End Sub
 
         ' POLYMORPHISM #2 (spec §5.2): the selected combo item IS a
@@ -483,6 +514,235 @@ Namespace Forms
                 e.Handled = True
             End If
         End Sub
+
+#End Region
+
+#Region "Checkout (the money path — spec §12.3)"
+
+        ' F12 = checkout shortcut (POS tab only). Scan-row Enter (add
+        ' item) is the M9 Enter shortcut and lives with txtScan above.
+        Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+            If keyData = Keys.F12 AndAlso
+               Me.tabRail.SelectedKey = "pos" AndAlso
+               Me.btnCheckout.Enabled AndAlso
+               Not _isCheckingOut Then
+                btnCheckout.PerformClick()
+                Return True
+            End If
+            Return MyBase.ProcessCmdKey(msg, keyData)
+        End Function
+
+        Private Sub btnCheckout_Click(sender As Object, e As EventArgs) Handles btnCheckout.Click
+            If _isCheckingOut OrElse _cashier Is Nothing Then
+                Return
+            End If
+
+            ' ① Guards BEFORE any SQL runs (project rule): empty cart and
+            '    a total of 0 or less can never reach the database.
+            If _cart.Items.Count = 0 Then
+                MessageBox.Show(Me, "The cart is empty. Add products before checking out.",
+                                "Nothing to sell", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Return
+            End If
+
+            Dim netTotal As Decimal = _cart.GetNetTotal()
+            If netTotal <= 0D Then
+                MessageBox.Show(Me, "The cart total is PHP 0.00 — nothing to sell.",
+                                "Nothing to sell", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Return
+            End If
+
+            ' ② Tender validation against the §12.3 limits; the bare
+            '    insufficient-cash wording comes verbatim from CartService.
+            Dim cashText As String = Me.txtCash.Text.Trim()
+            Dim cash As Decimal
+            If Not Decimal.TryParse(cashText, cash) Then
+                MessageBox.Show(Me, "Enter the cash amount received before checking out.",
+                                "Cash required", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Me.txtCash.Focus()
+                Return
+            End If
+            If cash > ValidationRules.MaxMoney Then
+                MessageBox.Show(Me,
+                                String.Format("Cash received cannot exceed PHP {0:N2}.",
+                                              ValidationRules.MaxMoney),
+                                "Cash too large", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
+
+            Dim change As Decimal
+            Try
+                change = _cart.ComputeChange(cash)   ' throws exactly when cash is short
+            Catch tenderError As InvalidOperationException
+                MessageBox.Show(Me, tenderError.Message, "Checkout not possible",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            Catch tenderRule As ArgumentException
+                MessageBox.Show(Me, tenderRule.Message, "Invalid cash amount",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End Try
+
+            ' ③ The cashier confirms BEFORE the transaction starts.
+            Dim confirmation As DialogResult = MessageBox.Show(Me,
+                String.Format("Proceed with this sale?" & Environment.NewLine & Environment.NewLine &
+                              "Total due:       PHP {0:N2}" & Environment.NewLine &
+                              "Cash received:   PHP {1:N2}" & Environment.NewLine &
+                              "Change:          PHP {2:N2}",
+                              netTotal, cash, change),
+                "Confirm checkout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+            If confirmation <> DialogResult.Yes Then
+                Return
+            End If
+
+            ' ④ Execute — one atomic transaction in the repository; the
+            '    receipt preview shows the recorded document; the cart
+            '    clears only when the preview closes.
+            _isCheckingOut = True
+            Try
+                Dim receiptNo As String = SaleRepository.GenerateReceiptNumber()
+
+                Dim sale As New Sale(receiptNo, _cashier.UserId, _cart.GetSubtotal(), netTotal)
+                sale.SaleDate = DateTime.Now
+                sale.CashierName = _cashier.FullName
+                sale.CustomerId = Nothing              ' POS sales are walk-in (M12 adds buy-as-member flows)
+                sale.CustomerName = String.Empty
+                sale.DiscountType = _cart.GetDiscountName()
+                sale.DiscountAmount = _cart.GetDiscountAmount()
+                sale.CashReceived = cash
+                sale.ChangeAmount = change
+                ' Frozen receipt copy for preview + printing — the cart
+                ' keeps mutating afterwards; the Sale must not.
+                sale.Items = New List(Of SaleItem)(_cart.Items)
+
+                SaleRepository.RecordSale(sale, _cart.Items)
+
+                Using preview As New ReceiptPreviewForm(sale)
+                    preview.ShowDialog(Me)
+                End Using
+
+                ' ⑤ Post-sale (sequence §12.3): reset payment UI + POS
+                '    stock numbers + Today list.
+                ResetPaymentUi()
+                LoadPosProducts()
+                If Me.todayView.Visible Then
+                    LoadTodayTransactions()
+                End If
+            Catch saleError As InvalidOperationException
+                ' Over-stock race / canceled transaction message from the
+                ' repository — verbatim, with "zero rows were written".
+                MessageBox.Show(Me, saleError.Message, "Sale not completed",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Catch dbError As Exception
+                ShowDataError("The sale could not be completed. No receipt was created — nothing was saved.", dbError)
+            Finally
+                _isCheckingOut = False
+                RefreshCartView()
+                UpdateCheckoutTotals()
+            End Try
+        End Sub
+
+        ' Post-success state: empty cart + NoDiscount back in the
+        ' strategy slot + cash box cleared + change line reset.
+        Private Sub ResetPaymentUi()
+            _cart.ClearCart()   ' items AND the discount strategy reset
+            _selectedCartProductId = 0
+
+            Me.txtCash.Clear()
+            If Me.cmbDiscount.SelectedIndex <> 0 Then
+                Me.cmbDiscount.SelectedIndex = 0   ' handler re-installs NoDiscount
+            End If
+            Me.lblChangeValue.Text = "—"
+            Me.lblChangeValue.ForeColor = Theme.Muted
+
+            RefreshCartView()
+            UpdateCheckoutTotals()
+        End Sub
+
+#End Region
+
+#Region "Today tab (completed transactions + details)"
+
+        Private Sub LoadTodayTransactions()
+            If _cashier Is Nothing Then
+                Return
+            End If
+
+            Try
+                Dim sales As List(Of Sale) = SaleRepository.GetSalesByDate(DateTime.Today)
+                Me.todayGrid.Rows.Clear()
+                For Each sale As Sale In sales
+                    Dim rowIndex As Integer = Me.todayGrid.Rows.Add()
+                    Dim row As DataGridViewRow = Me.todayGrid.Rows(rowIndex)
+                    row.Cells(0).Value = sale.ReceiptNo
+                    row.Cells(1).Value = sale.SaleDate.ToString("HH:mm:ss")
+                    row.Cells(2).Value = If(String.IsNullOrWhiteSpace(sale.CashierName), "Cashier", sale.CashierName)
+                    row.Cells(3).Value = String.Format("PHP {0:N2}", sale.Total)
+                    row.Tag = sale.SaleId
+                Next
+
+                Me.lblTodayCount.Text = String.Format("{0} receipt(s) today", sales.Count)
+            Catch dbError As Exception
+                ShowDataError("Could not load today's transactions.", dbError)
+            End Try
+
+            todayGrid_SelectionChanged(Me, EventArgs.Empty)
+        End Sub
+
+        ' Selection governs whether "View details" can fire.
+        Private Sub todayGrid_SelectionChanged(sender As Object, e As EventArgs) Handles todayGrid.SelectionChanged
+            Me.btnTodayDetails.Enabled = SelectedTodaySaleId() <> 0
+        End Sub
+
+        Private Sub todayGrid_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs) Handles todayGrid.CellDoubleClick
+            If e.RowIndex < 0 Then
+                Return
+            End If
+            OpenPastReceiptForSelection()
+        End Sub
+
+        Private Sub btnTodayDetails_Click(sender As Object, e As EventArgs) Handles btnTodayDetails.Click
+            OpenPastReceiptForSelection()
+        End Sub
+
+        Private Sub btnTodayRefresh_Click(sender As Object, e As EventArgs) Handles btnTodayRefresh.Click
+            LoadTodayTransactions()
+        End Sub
+
+        ' Row Tag carries the SaleId; GetById re-hydrates the frozen
+        ' document and PastReceiptForm (shared by Owner/M15 and
+        ' Customer/M12) shows + reprints it.
+        Private Sub OpenPastReceiptForSelection()
+            Dim saleId As Integer = SelectedTodaySaleId()
+            If saleId = 0 Then
+                MessageBox.Show(Me, "Select a receipt in the list first.",
+                                "No receipt selected", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Return
+            End If
+
+            Try
+                Dim sale As Sale = SaleRepository.GetById(saleId)
+                If sale Is Nothing Then
+                    MessageBox.Show(Me, "That receipt no longer exists in the database.",
+                                    "Not found", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    LoadTodayTransactions()
+                    Return
+                End If
+
+                Using details As New PastReceiptForm(sale)
+                    details.ShowDialog(Me)
+                End Using
+            Catch dbError As Exception
+                ShowDataError("Could not open the receipt details.", dbError)
+            End Try
+        End Sub
+
+        Private Function SelectedTodaySaleId() As Integer
+            If Me.todayGrid.CurrentRow Is Nothing Then
+                Return 0
+            End If
+            Return RowProductId(Me.todayGrid.CurrentRow)
+        End Function
 
 #End Region
 
@@ -530,6 +790,11 @@ Namespace Forms
             Me.lblTotalValue.ForeColor = Theme.Ink
             Me.lblTotalValue.Font = Theme.FontFor(ThemeWeight.Bold, 11.0F)
             Me.lblChangeValue.ForeColor = Theme.Muted
+
+            ' Today tab captions (M10).
+            Me.lblTodayTitle.Font = Theme.FontFor(ThemeWeight.Semibold, 11.0F)
+            Me.lblTodayTitle.ForeColor = Theme.Ink
+            Me.lblTodayCount.ForeColor = Theme.Muted
         End Sub
 
 #End Region

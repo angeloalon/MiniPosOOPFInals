@@ -35,6 +35,17 @@ Namespace Forms
             Me.permissionsView = New Global.oopfinals.Controls.RoundedPanel()
             Me.permissionsGrid = New System.Windows.Forms.DataGridView()
             Me.colPermission = New System.Windows.Forms.DataGridViewTextBoxColumn()
+            Me.todayView = New Global.oopfinals.Controls.RoundedPanel()
+            Me.todayGrid = New System.Windows.Forms.DataGridView()
+            Me.colTodayReceipt = New System.Windows.Forms.DataGridViewTextBoxColumn()
+            Me.colTodayTime = New System.Windows.Forms.DataGridViewTextBoxColumn()
+            Me.colTodayCashier = New System.Windows.Forms.DataGridViewTextBoxColumn()
+            Me.colTodayTotal = New System.Windows.Forms.DataGridViewTextBoxColumn()
+            Me.todayHeader = New System.Windows.Forms.Panel()
+            Me.lblTodayTitle = New System.Windows.Forms.Label()
+            Me.lblTodayCount = New System.Windows.Forms.Label()
+            Me.btnTodayDetails = New Global.oopfinals.Controls.StyledButton()
+            Me.btnTodayRefresh = New Global.oopfinals.Controls.StyledButton()
             Me.posContainer = New Global.oopfinals.Controls.RoundedPanel()
             Me.cartPanel = New System.Windows.Forms.Panel()
             Me.cartHeader = New System.Windows.Forms.Panel()
@@ -87,7 +98,10 @@ Namespace Forms
             CType(Me.permissionsGrid, System.ComponentModel.ISupportInitialize).BeginInit()
             CType(Me.cartGrid, System.ComponentModel.ISupportInitialize).BeginInit()
             CType(Me.posGrid, System.ComponentModel.ISupportInitialize).BeginInit()
+            CType(Me.todayGrid, System.ComponentModel.ISupportInitialize).BeginInit()
             Me.permissionsView.SuspendLayout()
+            Me.todayView.SuspendLayout()
+            Me.todayHeader.SuspendLayout()
             Me.posContainer.SuspendLayout()
             Me.cartPanel.SuspendLayout()
             Me.cartHeader.SuspendLayout()
@@ -147,10 +161,11 @@ Namespace Forms
             Me.pageHeading.TabIndex = 1
             Me.pageHeading.TabStop = False
             '
-            'viewHost (swaps POS ↔ Permissions by visibility)
+            'viewHost (swaps POS ↔ Today ↔ Permissions by visibility)
             '
             Me.viewHost.BackColor = System.Drawing.Color.FromArgb(243, 245, 244)
             Me.viewHost.Controls.Add(Me.permissionsView)
+            Me.viewHost.Controls.Add(Me.todayView)
             Me.viewHost.Controls.Add(Me.posContainer)
             Me.viewHost.Dock = System.Windows.Forms.DockStyle.Fill
             Me.viewHost.Location = New System.Drawing.Point(24, 80)
@@ -189,6 +204,117 @@ Namespace Forms
             Me.colPermission.HeaderText = "Permission key"
             Me.colPermission.Name = "colPermission"
             Me.colPermission.ReadOnly = True
+            '
+            'todayView (Today tab host — swaps with posContainer)
+            '
+            Me.todayView.Controls.Add(Me.todayGrid)
+            Me.todayView.Controls.Add(Me.todayHeader)
+            Me.todayView.Dock = System.Windows.Forms.DockStyle.Fill
+            Me.todayView.Location = New System.Drawing.Point(0, 0)
+            Me.todayView.Name = "todayView"
+            Me.todayView.Padding = New System.Windows.Forms.Padding(8)
+            Me.todayView.Size = New System.Drawing.Size(716, 493)
+            Me.todayView.TabIndex = 2
+            Me.todayView.Visible = False
+            '
+            'todayHeader
+            '
+            Me.todayHeader.BackColor = System.Drawing.Color.White
+            Me.todayHeader.Controls.Add(Me.lblTodayTitle)
+            Me.todayHeader.Controls.Add(Me.lblTodayCount)
+            Me.todayHeader.Controls.Add(Me.btnTodayDetails)
+            Me.todayHeader.Controls.Add(Me.btnTodayRefresh)
+            Me.todayHeader.Dock = System.Windows.Forms.DockStyle.Top
+            Me.todayHeader.Location = New System.Drawing.Point(8, 8)
+            Me.todayHeader.Name = "todayHeader"
+            Me.todayHeader.Size = New System.Drawing.Size(700, 64)
+            Me.todayHeader.TabIndex = 1
+            '
+            'lblTodayTitle
+            '
+            Me.lblTodayTitle.AutoSize = True
+            Me.lblTodayTitle.Font = New System.Drawing.Font("Segoe UI Semibold", 11.0!)
+            Me.lblTodayTitle.ForeColor = System.Drawing.Color.FromArgb(26, 31, 28)
+            Me.lblTodayTitle.Location = New System.Drawing.Point(8, 6)
+            Me.lblTodayTitle.Name = "lblTodayTitle"
+            Me.lblTodayTitle.Size = New System.Drawing.Size(188, 24)
+            Me.lblTodayTitle.TabIndex = 0
+            Me.lblTodayTitle.Text = "Today's transactions"
+            '
+            'lblTodayCount
+            '
+            Me.lblTodayCount.AutoSize = True
+            Me.lblTodayCount.ForeColor = System.Drawing.Color.FromArgb(107, 114, 128)
+            Me.lblTodayCount.Location = New System.Drawing.Point(12, 34)
+            Me.lblTodayCount.Name = "lblTodayCount"
+            Me.lblTodayCount.Size = New System.Drawing.Size(108, 15)
+            Me.lblTodayCount.TabIndex = 1
+            Me.lblTodayCount.Text = "0 receipt(s) today"
+            '
+            'btnTodayDetails
+            '
+            Me.btnTodayDetails.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+            Me.btnTodayDetails.Enabled = False
+            Me.btnTodayDetails.Kind = Global.oopfinals.Controls.ThemeButtonKind.Secondary
+            Me.btnTodayDetails.Location = New System.Drawing.Point(476, 16)
+            Me.btnTodayDetails.Name = "btnTodayDetails"
+            Me.btnTodayDetails.Size = New System.Drawing.Size(110, 32)
+            Me.btnTodayDetails.TabIndex = 2
+            Me.btnTodayDetails.Text = "View details"
+            Me.btnTodayDetails.UseVisualStyleBackColor = False
+            '
+            'btnTodayRefresh
+            '
+            Me.btnTodayRefresh.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+            Me.btnTodayRefresh.Kind = Global.oopfinals.Controls.ThemeButtonKind.Secondary
+            Me.btnTodayRefresh.Location = New System.Drawing.Point(594, 16)
+            Me.btnTodayRefresh.Name = "btnTodayRefresh"
+            Me.btnTodayRefresh.Size = New System.Drawing.Size(106, 32)
+            Me.btnTodayRefresh.TabIndex = 3
+            Me.btnTodayRefresh.Text = "Refresh"
+            Me.btnTodayRefresh.UseVisualStyleBackColor = False
+            '
+            'todayGrid
+            '
+            Me.todayGrid.AllowUserToAddRows = False
+            Me.todayGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing
+            Me.todayGrid.Columns.AddRange(New System.Windows.Forms.DataGridViewColumn() {Me.colTodayReceipt, Me.colTodayTime, Me.colTodayCashier, Me.colTodayTotal})
+            Me.todayGrid.Dock = System.Windows.Forms.DockStyle.Fill
+            Me.todayGrid.Location = New System.Drawing.Point(8, 72)
+            Me.todayGrid.MultiSelect = False
+            Me.todayGrid.Name = "todayGrid"
+            Me.todayGrid.ReadOnly = True
+            Me.todayGrid.RowHeadersVisible = False
+            Me.todayGrid.Size = New System.Drawing.Size(700, 413)
+            Me.todayGrid.TabIndex = 0
+            '
+            'colTodayReceipt
+            '
+            Me.colTodayReceipt.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill
+            Me.colTodayReceipt.HeaderText = "Receipt No"
+            Me.colTodayReceipt.Name = "colTodayReceipt"
+            Me.colTodayReceipt.ReadOnly = True
+            '
+            'colTodayTime
+            '
+            Me.colTodayTime.HeaderText = "Time"
+            Me.colTodayTime.Name = "colTodayTime"
+            Me.colTodayTime.ReadOnly = True
+            Me.colTodayTime.Width = 90
+            '
+            'colTodayCashier
+            '
+            Me.colTodayCashier.HeaderText = "Cashier"
+            Me.colTodayCashier.Name = "colTodayCashier"
+            Me.colTodayCashier.ReadOnly = True
+            Me.colTodayCashier.Width = 180
+            '
+            'colTodayTotal
+            '
+            Me.colTodayTotal.HeaderText = "Total"
+            Me.colTodayTotal.Name = "colTodayTotal"
+            Me.colTodayTotal.ReadOnly = True
+            Me.colTodayTotal.Width = 110
             '
             'posContainer
             '
@@ -719,7 +845,7 @@ Namespace Forms
             Me.lblCheckoutHint.Name = "lblCheckoutHint"
             Me.lblCheckoutHint.Size = New System.Drawing.Size(268, 60)
             Me.lblCheckoutHint.TabIndex = 16
-            Me.lblCheckoutHint.Text = "Checkout is enabled in the next stage (M10): the atomic sale, receipt preview and Today's transactions list."
+            Me.lblCheckoutHint.Text = "Cash must cover the total due (≤ PHP 999,999.99). F12 = Checkout; Enter in the scan row adds items. Every sale writes one atomic receipt — stock, audit trail and Today all update on success."
             '
             'CashierDashboardForm
             '
@@ -736,7 +862,11 @@ Namespace Forms
             CType(Me.permissionsGrid, System.ComponentModel.ISupportInitialize).EndInit()
             CType(Me.cartGrid, System.ComponentModel.ISupportInitialize).EndInit()
             CType(Me.posGrid, System.ComponentModel.ISupportInitialize).EndInit()
+            CType(Me.todayGrid, System.ComponentModel.ISupportInitialize).EndInit()
             Me.permissionsView.ResumeLayout(False)
+            Me.todayView.ResumeLayout(False)
+            Me.todayHeader.ResumeLayout(False)
+            Me.todayHeader.PerformLayout()
             Me.posContainer.ResumeLayout(False)
             Me.cartPanel.ResumeLayout(False)
             Me.cartHeader.ResumeLayout(False)
@@ -761,6 +891,17 @@ Namespace Forms
         Friend WithEvents permissionsView As Global.oopfinals.Controls.RoundedPanel
         Friend WithEvents permissionsGrid As System.Windows.Forms.DataGridView
         Friend WithEvents colPermission As System.Windows.Forms.DataGridViewTextBoxColumn
+        Friend WithEvents todayView As Global.oopfinals.Controls.RoundedPanel
+        Friend WithEvents todayGrid As System.Windows.Forms.DataGridView
+        Friend WithEvents colTodayReceipt As System.Windows.Forms.DataGridViewTextBoxColumn
+        Friend WithEvents colTodayTime As System.Windows.Forms.DataGridViewTextBoxColumn
+        Friend WithEvents colTodayCashier As System.Windows.Forms.DataGridViewTextBoxColumn
+        Friend WithEvents colTodayTotal As System.Windows.Forms.DataGridViewTextBoxColumn
+        Friend WithEvents todayHeader As System.Windows.Forms.Panel
+        Friend WithEvents lblTodayTitle As System.Windows.Forms.Label
+        Friend WithEvents lblTodayCount As System.Windows.Forms.Label
+        Friend WithEvents btnTodayDetails As Global.oopfinals.Controls.StyledButton
+        Friend WithEvents btnTodayRefresh As Global.oopfinals.Controls.StyledButton
         Friend WithEvents posContainer As Global.oopfinals.Controls.RoundedPanel
         Friend WithEvents cartPanel As System.Windows.Forms.Panel
         Friend WithEvents cartHeader As System.Windows.Forms.Panel
