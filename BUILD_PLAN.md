@@ -183,7 +183,7 @@
 
 ---
 
-### [ ] M8 — Real `LoginForm` + `RegisterForm`; startup swap; `Form1` retirement *(Polymorphism #1 live)*
+### [x] M8 — Real `LoginForm` + `RegisterForm`; startup swap; `Form1` retirement *(Polymorphism #1 live)*
 
 **Goal:** the app becomes the spec's real front door; the placeholder and launcher scaffolding disappear.
 
