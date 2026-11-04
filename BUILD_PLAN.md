@@ -93,7 +93,7 @@
 
 ---
 
-### [ ] M3 — Controls wave 1: themed control library
+### [x] M3 — Controls wave 1: themed control library
 
 **Goal:** land the Figma-token system so every later form is styled at birth.
 
@@ -117,7 +117,7 @@
 
 ---
 
-### [ ] M4 — User family + dashboard shells + temporary Launcher *(Abstraction + Inheritance land)*
+### [x] M4 — User family + dashboard shells + temporary Launcher *(Abstraction + Inheritance land)*
 
 **Goal:** make polymorphic routing compile today by shipping the real `User` hierarchy and real (minimal) dashboards.
 

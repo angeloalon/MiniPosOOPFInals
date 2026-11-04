@@ -85,6 +85,34 @@
       <DependentUpon>Form1.vb</DependentUpon>
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\OwnerDashboardForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\OwnerDashboardForm.Designer.vb">
+      <DependentUpon>OwnerDashboardForm.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\CashierDashboardForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\CashierDashboardForm.Designer.vb">
+      <DependentUpon>CashierDashboardForm.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ClerkDashboardForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\ClerkDashboardForm.Designer.vb">
+      <DependentUpon>ClerkDashboardForm.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\CustomerDashboardForm.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\CustomerDashboardForm.Designer.vb">
+      <DependentUpon>CustomerDashboardForm.vb</DependentUpon>
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Models\Product.vb" />
     <Compile Include="Models\Category.vb" />
     <Compile Include="Models\Supplier.vb" />
@@ -93,6 +121,11 @@
     <Compile Include="Models\Sale.vb" />
     <Compile Include="Models\Discount.vb" />
     <Compile Include="Models\IReportable.vb" />
+    <Compile Include="Models\User.vb" />
+    <Compile Include="Models\StoreOwner.vb" />
+    <Compile Include="Models\Cashier.vb" />
+    <Compile Include="Models\InventoryClerk.vb" />
+    <Compile Include="Models\Customer.vb" />
     <Compile Include="Controls\Theme.vb" />
     <Compile Include="Controls\IconArt.vb" />
     <Compile Include="Controls\StyledControls.vb">
