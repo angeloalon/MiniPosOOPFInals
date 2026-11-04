@@ -135,8 +135,11 @@
     <Compile Include="Models\Customer.vb" />
     <Compile Include="Data\UserRepository.vb" />
     <Compile Include="Data\DatabaseHelper.vb" />
+    <Compile Include="Data\ProductRepository.vb" />
+    <Compile Include="Data\CategoryRepository.vb" />
     <Compile Include="Services\ValidationRules.vb" />
     <Compile Include="Services\AuthService.vb" />
+    <Compile Include="Services\CartService.vb" />
     <Compile Include="Controls\Theme.vb" />
     <Compile Include="Controls\IconArt.vb" />
     <Compile Include="Controls\StyledControls.vb">
