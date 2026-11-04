@@ -5,8 +5,8 @@ Option Strict On
 ' oopfinals — Mini-Grocery Store POS & Daily Inventory System
 ' ITP 102 — Object-Oriented Programming · University of Caloocan City
 '
-' Form1.vb — TEMPORARY dev launcher (M4, extended M6). Replaced by the
-' real LoginForm at M8 (Application.myapp swap); every reference to
+' Form1.vb — TEMPORARY dev launcher (M4, extended M6/M7). Replaced by
+' the real LoginForm at M8 (Application.myapp swap); every reference to
 ' Form1 dies with it (spec §12.2).
 '
 ' OOP concept: POLYMORPHISM (spec §5.4)
@@ -22,9 +22,11 @@ Option Strict On
 ' =====================================================================
 
 Imports System
+Imports System.Collections.Generic
 Imports System.Text
 Imports System.Windows.Forms
 Imports oopfinals.Controls
+Imports oopfinals.Data
 Imports oopfinals.Models
 Imports oopfinals.Services
 
@@ -111,6 +113,71 @@ Public Class Form1
         summary.AppendLine("New salt → new hash (per-user salt): " & If(saltUnique, "PASS", "FAIL"))
 
         MessageBox.Show(summary.ToString(), "M6 crypto self-test", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+#End Region
+
+#Region "M7 database & demo-login self-test (launcher helper — dies with Form1 at M8)"
+
+    ' Exercises the M7 checklist out loud:
+    '   ① InitializeDatabase() — creates bin\Debug\grocery.db, runs the
+    '      seven CREATE TABLE IF NOT EXISTS statements, and executes the
+    '      guarded one-transaction seed (4 users, 6 categories, 3
+    '      suppliers, 30 products, 30 StockIn movements) on a fresh DB.
+    '   ② Authenticates all four §15 demo pairs through the REAL
+    '      AuthService pipeline — DB row → salt+salted PBKDF2 verify →
+    '      role-string → subclass factory — then resolves each routed
+    '      dashboard via user.GetDashboardForm() WITHOUT opening it.
+    ' Passwords exist only as transient demo literals here; the summary
+    ' prints usernames and pass/fail booleans, never credentials.
+    Private Sub btnInitDb_Click(sender As Object, e As EventArgs) Handles btnInitDb.Click
+        Try
+            Dim freshlySeeded As Boolean = DatabaseHelper.InitializeDatabase()
+
+            Dim demoLogins As New List(Of Tuple(Of String, String))()
+            demoLogins.Add(Tuple.Create("owner", "owner123"))
+            demoLogins.Add(Tuple.Create("cashier", "cashier123"))
+            demoLogins.Add(Tuple.Create("clerk", "clerk123"))
+            demoLogins.Add(Tuple.Create("customer", "customer123"))
+
+            Dim summary As New StringBuilder()
+            summary.AppendLine("M7 database & demo-login self-test")
+            summary.AppendLine()
+            summary.AppendLine("Database location : " & DatabaseHelper.DatabasePath)
+            summary.AppendLine("First-run seed    : " &
+                              If(freshlySeeded,
+                                 "executed now (brand-new database created and seeded)",
+                                 "skipped (database already initialized)"))
+            summary.AppendLine()
+            summary.AppendLine("Demo pairs authenticated against the seeded database:")
+
+            For Each demo As Tuple(Of String, String) In demoLogins
+                Dim user As Models.User = AuthService.Authenticate(demo.Item1, demo.Item2)
+
+                If user Is Nothing Then
+                    summary.AppendLine(demo.Item1 & ": FAIL — Authenticate returned Nothing")
+                Else
+                    ' Routing proof: resolve (then immediately dispose) the
+                    ' dashboard produced by polymorphic dispatch.
+                    Dim routedDashboard As String
+                    Using dashboard As Form = user.GetDashboardForm()
+                        routedDashboard = dashboard.Name
+                    End Using
+
+                    summary.AppendLine(demo.Item1 & ": PASS — " &
+                                       user.GetRoleName() &
+                                       " → " & routedDashboard &
+                                       " (" & user.ToString() & ")")
+                End If
+            Next
+
+            MessageBox.Show(summary.ToString(), "M7 database & demo-login self-test",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Catch ex As Exception
+            MessageBox.Show("Could not initialize the database: " & ex.Message,
+                            "M7 database & demo-login self-test",
+                            MessageBoxButtons.OK, MessageBoxIcon.[Error])
+        End Try
     End Sub
 
 #End Region

@@ -127,6 +127,7 @@
     <Compile Include="Models\InventoryClerk.vb" />
     <Compile Include="Models\Customer.vb" />
     <Compile Include="Data\UserRepository.vb" />
+    <Compile Include="Data\DatabaseHelper.vb" />
     <Compile Include="Services\ValidationRules.vb" />
     <Compile Include="Services\AuthService.vb" />
     <Compile Include="Controls\Theme.vb" />

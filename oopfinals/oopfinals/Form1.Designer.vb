@@ -34,6 +34,7 @@ Partial Class Form1
         Me.btnClerk = New Global.oopfinals.Controls.StyledButton()
         Me.btnCustomer = New Global.oopfinals.Controls.StyledButton()
         Me.btnCryptoTest = New Global.oopfinals.Controls.StyledButton()
+        Me.btnInitDb = New Global.oopfinals.Controls.StyledButton()
         Me.tlpRoot.SuspendLayout()
         Me.card.SuspendLayout()
         Me.SuspendLayout()
@@ -61,9 +62,10 @@ Partial Class Form1
         Me.card.Controls.Add(Me.btnClerk)
         Me.card.Controls.Add(Me.btnCustomer)
         Me.card.Controls.Add(Me.btnCryptoTest)
+        Me.card.Controls.Add(Me.btnInitDb)
         Me.card.Location = New System.Drawing.Point(170, 45)
         Me.card.Name = "card"
-        Me.card.Size = New System.Drawing.Size(460, 416)
+        Me.card.Size = New System.Drawing.Size(460, 482)
         Me.card.TabIndex = 0
         '
         'lblTitle
@@ -84,7 +86,7 @@ Partial Class Form1
         Me.lblSubtitle.Name = "lblSubtitle"
         Me.lblSubtitle.Size = New System.Drawing.Size(390, 15)
         Me.lblSubtitle.TabIndex = 1
-        Me.lblSubtitle.Text = "M6 dev launcher — open a role (polymorphic routing) or run the crypto self-test"
+        Me.lblSubtitle.Text = "M7 dev launcher — open a role, init the demo database, or run the crypto self-test"
         '
         'btnOwner
         '
@@ -136,6 +138,16 @@ Partial Class Form1
         Me.btnCryptoTest.Text = "Crypto self-test — M6 PBKDF2 hash & verify"
         Me.btnCryptoTest.UseVisualStyleBackColor = False
         '
+        'btnInitDb
+        '
+        Me.btnInitDb.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.btnInitDb.Location = New System.Drawing.Point(28, 398)
+        Me.btnInitDb.Name = "btnInitDb"
+        Me.btnInitDb.Size = New System.Drawing.Size(404, 46)
+        Me.btnInitDb.TabIndex = 7
+        Me.btnInitDb.Text = "Init DB & demo login — M7 schema + seed test"
+        Me.btnInitDb.UseVisualStyleBackColor = False
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(7.0!, 15.0!)
@@ -162,5 +174,6 @@ Partial Class Form1
     Friend WithEvents btnClerk As Global.oopfinals.Controls.StyledButton
     Friend WithEvents btnCustomer As Global.oopfinals.Controls.StyledButton
     Friend WithEvents btnCryptoTest As Global.oopfinals.Controls.StyledButton
+    Friend WithEvents btnInitDb As Global.oopfinals.Controls.StyledButton
 
 End Class

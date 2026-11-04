@@ -173,7 +173,7 @@
 
 ---
 
-### [ ] M7 — `Data/DatabaseHelper`: schema + atomic seed
+### [x] M7 — `Data/DatabaseHelper`: schema + atomic seed
 
 **Goal:** seven tables, FK-enforced connection, full first-run seed inside one guarded transaction.
 
