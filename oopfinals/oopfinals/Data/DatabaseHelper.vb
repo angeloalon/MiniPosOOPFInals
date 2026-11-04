@@ -175,6 +175,15 @@ Namespace Data
                     End Using
                 Next
 
+                ' One deliberate secondary index beyond the §8 DDL: SQLite
+                ' auto-indexes PK/UNIQUE columns only and nothing on the
+                ' child side — SaleItems.SaleId is the fan-out column of
+                ' every receipt-details read (GetSaleItems, M10+). IF NOT
+                ' EXISTS keeps it idempotent, like the CREATE TABLE loop.
+                Using indexCommand As New SQLiteCommand("CREATE INDEX IF NOT EXISTS idx_saleitems_saleid ON SaleItems(SaleId);", connection)
+                    indexCommand.ExecuteNonQuery()
+                End Using
+
                 Dim seedRan As Boolean = SeedInitialDataIfEmpty(connection)
                 Return isNewDatabase OrElse seedRan
             End Using
@@ -207,9 +216,18 @@ Namespace Data
                     SeedProductsAndMovements(connection, transaction)
                     transaction.Commit()
                     Return True
-                Catch
-                    transaction.Rollback()
-                    Throw   ' rethrow the ORIGINAL error (never swallowed)
+                Catch seedError As Exception
+                    ' Best-effort rollback, guarded in its own Try/Catch:
+                    ' if the rollback itself faults, that error must NOT
+                    ' become the rethrown one. The ORIGINAL seeding error
+                    ' is rethrown either way, unchanged.
+                    Try
+                        transaction.Rollback()
+                    Catch
+                        ' Rollback failure observed and deliberately set
+                        ' aside — the rethrow below carries seedError.
+                    End Try
+                    Throw seedError   ' rethrow the ORIGINAL error (never swallowed)
                 End Try
             End Using
         End Function
