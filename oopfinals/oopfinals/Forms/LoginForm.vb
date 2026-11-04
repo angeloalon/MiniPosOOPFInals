@@ -194,6 +194,15 @@ Namespace Forms
         ' A failed authentication (verify returned Nothing) counts as
         ' one attempt; the fifth consecutive one locks the input.
         Private Sub RegisterFailedAttempt()
+            ' Credential hygiene on every failure, matching the logout
+            ' loop in btnLogin_Click: the password box must never carry
+            ' the previous attempt's secret into a retry or a lockout —
+            ' a shared terminal plus the show-password toggle would
+            ' otherwise reveal it with a single click. Lockouts start
+            ' here too (fifth failure), so both cases are covered.
+            txtPassword.Clear()
+            chkShowPassword.Checked = False
+
             _failedAttempts += 1
 
             If _failedAttempts >= MaxFailedAttempts Then
