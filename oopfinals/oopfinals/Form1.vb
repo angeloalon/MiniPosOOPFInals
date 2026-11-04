@@ -5,9 +5,9 @@ Option Strict On
 ' oopfinals — Mini-Grocery Store POS & Daily Inventory System
 ' ITP 102 — Object-Oriented Programming · University of Caloocan City
 '
-' Form1.vb — TEMPORARY dev launcher (M4). Replaced by the real
-' LoginForm at M8 (Application.myapp swap); every reference to Form1
-' dies with it (spec §12.2).
+' Form1.vb — TEMPORARY dev launcher (M4, extended M6). Replaced by the
+' real LoginForm at M8 (Application.myapp swap); every reference to
+' Form1 dies with it (spec §12.2).
 '
 ' OOP concept: POLYMORPHISM (spec §5.4)
 '   - Each button constructs its concrete subclass directly, then ONLY
@@ -22,9 +22,11 @@ Option Strict On
 ' =====================================================================
 
 Imports System
+Imports System.Text
 Imports System.Windows.Forms
 Imports oopfinals.Controls
 Imports oopfinals.Models
+Imports oopfinals.Services
 
 Public Class Form1
 
@@ -62,6 +64,56 @@ Public Class Form1
             dashboard.ShowDialog(Me)
         End Using
     End Sub
+
+#Region "M6 crypto self-test (launcher helper — dies with Form1 at M8)"
+
+    ' Exercises the M6 checklist out loud: hash → verify True, tamper →
+    ' False, short/false passwords rejected, salt uniqueness. The test
+    ' password lives ONLY inside this method and is never shown, logged
+    ' or persisted — the summary reports pass/fail booleans alone.
+    Private Sub btnCryptoTest_Click(sender As Object, e As EventArgs) Handles btnCryptoTest.Click
+        Dim summary As New StringBuilder()
+
+        Dim salt As String = AuthService.GenerateSalt()
+        Dim password As String = "GrocerySelfTest-2026"
+        Dim hash As String = AuthService.HashPassword(password, salt)
+
+        Dim correctAccepted As Boolean = AuthService.VerifyPassword(password, salt, hash)
+        Dim wrongPasswordRejected As Boolean = Not AuthService.VerifyPassword(password & "x", salt, hash)
+
+        ' Flip the last two Base64 characters — same length, valid
+        ' alphabet, different digest: prove the compare is real, not
+        ' "always True".
+        Dim tamperedHash As String = hash.Substring(0, hash.Length - 2) & "AA"
+        Dim tamperedHashRejected As Boolean = Not AuthService.VerifyPassword(password, salt, tamperedHash)
+
+        Dim shortPasswordRejected As Boolean = Not ValidationRules.IsValidPassword("Ab123")
+
+        Dim emptyPasswordThrew As Boolean = False
+        Try
+            AuthService.HashPassword(String.Empty, salt)
+        Catch ex As ArgumentException
+            emptyPasswordThrew = True
+        End Try
+
+        ' A fresh salt over the same password must derive a different
+        ' hash — that is what "salted" means.
+        Dim secondHash As String = AuthService.HashPassword(password, AuthService.GenerateSalt())
+        Dim saltUnique As Boolean = secondHash <> hash
+
+        summary.AppendLine("M6 crypto self-test (PBKDF2-HMAC-SHA256, 10,000 iterations)")
+        summary.AppendLine()
+        summary.AppendLine("Hash → verify (correct password)   : " & If(correctAccepted, "PASS", "FAIL"))
+        summary.AppendLine("Verify (wrong password) rejected   : " & If(wrongPasswordRejected, "PASS", "FAIL"))
+        summary.AppendLine("Verify (tampered hash) rejected    : " & If(tamperedHashRejected, "PASS", "FAIL"))
+        summary.AppendLine("Short password (5 chars) rejected  : " & If(shortPasswordRejected, "PASS", "FAIL"))
+        summary.AppendLine("Empty password hashing throws      : " & If(emptyPasswordThrew, "PASS", "FAIL"))
+        summary.AppendLine("New salt → new hash (per-user salt): " & If(saltUnique, "PASS", "FAIL"))
+
+        MessageBox.Show(summary.ToString(), "M6 crypto self-test", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+#End Region
 
 #Region "Figma UI restyle (M3 tokens — §10.1)"
 

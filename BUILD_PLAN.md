@@ -157,7 +157,7 @@
 
 ---
 
-### [ ] M6 — `Services/ValidationRules` + `Services/AuthService` *(crypto lands)*
+### [x] M6 — `Services/ValidationRules` + `Services/AuthService` *(crypto lands)*
 
 **Goal:** one validation source of truth; PBKDF2 so plaintext never persists.
 

@@ -33,6 +33,7 @@ Partial Class Form1
         Me.btnCashier = New Global.oopfinals.Controls.StyledButton()
         Me.btnClerk = New Global.oopfinals.Controls.StyledButton()
         Me.btnCustomer = New Global.oopfinals.Controls.StyledButton()
+        Me.btnCryptoTest = New Global.oopfinals.Controls.StyledButton()
         Me.tlpRoot.SuspendLayout()
         Me.card.SuspendLayout()
         Me.SuspendLayout()
@@ -59,9 +60,10 @@ Partial Class Form1
         Me.card.Controls.Add(Me.btnCashier)
         Me.card.Controls.Add(Me.btnClerk)
         Me.card.Controls.Add(Me.btnCustomer)
+        Me.card.Controls.Add(Me.btnCryptoTest)
         Me.card.Location = New System.Drawing.Point(170, 45)
         Me.card.Name = "card"
-        Me.card.Size = New System.Drawing.Size(460, 360)
+        Me.card.Size = New System.Drawing.Size(460, 416)
         Me.card.TabIndex = 0
         '
         'lblTitle
@@ -82,7 +84,7 @@ Partial Class Form1
         Me.lblSubtitle.Name = "lblSubtitle"
         Me.lblSubtitle.Size = New System.Drawing.Size(390, 15)
         Me.lblSubtitle.TabIndex = 1
-        Me.lblSubtitle.Text = "M4 dev launcher — pick a role to open its dashboard (polymorphic routing)"
+        Me.lblSubtitle.Text = "M6 dev launcher — open a role (polymorphic routing) or run the crypto self-test"
         '
         'btnOwner
         '
@@ -124,6 +126,16 @@ Partial Class Form1
         Me.btnCustomer.Text = "Ana Batumbakal — Customer"
         Me.btnCustomer.UseVisualStyleBackColor = False
         '
+        'btnCryptoTest
+        '
+        Me.btnCryptoTest.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.btnCryptoTest.Location = New System.Drawing.Point(28, 342)
+        Me.btnCryptoTest.Name = "btnCryptoTest"
+        Me.btnCryptoTest.Size = New System.Drawing.Size(404, 46)
+        Me.btnCryptoTest.TabIndex = 6
+        Me.btnCryptoTest.Text = "Crypto self-test — M6 PBKDF2 hash & verify"
+        Me.btnCryptoTest.UseVisualStyleBackColor = False
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(7.0!, 15.0!)
@@ -132,7 +144,7 @@ Partial Class Form1
         Me.Controls.Add(Me.tlpRoot)
         Me.Name = "Form1"
         Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-        Me.Text = "Mini-Grocery Store POS — Dev Launcher (M4)"
+        Me.Text = "Mini-Grocery Store POS — Dev Launcher (M4–M7)"
         Me.WindowState = System.Windows.Forms.FormWindowState.Maximized
         Me.card.ResumeLayout(False)
         Me.card.PerformLayout()
@@ -149,5 +161,6 @@ Partial Class Form1
     Friend WithEvents btnCashier As Global.oopfinals.Controls.StyledButton
     Friend WithEvents btnClerk As Global.oopfinals.Controls.StyledButton
     Friend WithEvents btnCustomer As Global.oopfinals.Controls.StyledButton
+    Friend WithEvents btnCryptoTest As Global.oopfinals.Controls.StyledButton
 
 End Class
