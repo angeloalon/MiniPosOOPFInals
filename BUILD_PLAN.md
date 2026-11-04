@@ -147,7 +147,7 @@
 
 ---
 
-### [ ] M5 — `Data/UserRepository` (inert by design)
+### [x] M5 — `Data/UserRepository` (inert by design)
 
 **Goal:** user persistence + role→subclass factory that `AuthService` will consume next.
 

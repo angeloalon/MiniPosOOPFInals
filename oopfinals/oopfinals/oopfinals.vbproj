@@ -126,6 +126,7 @@
     <Compile Include="Models\Cashier.vb" />
     <Compile Include="Models\InventoryClerk.vb" />
     <Compile Include="Models\Customer.vb" />
+    <Compile Include="Data\UserRepository.vb" />
     <Compile Include="Controls\Theme.vb" />
     <Compile Include="Controls\IconArt.vb" />
     <Compile Include="Controls\StyledControls.vb">
